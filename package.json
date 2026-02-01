@@ -1,0 +1,13 @@
+{
+  "name": "greythr-automation",
+  "version": "1.0.0",
+  "scripts": {
+    "signin": "npx playwright test tests/signin.spec.ts",
+    "signout": "npx playwright test tests/signout.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.42.0",
+    "axios": "^1.6.0",
+    "nodemailer": "^6.9.0"
+  }
+}
