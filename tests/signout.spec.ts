@@ -1,14 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
-test('Auto Sign Out', async ({ page }) => {
-  await page.goto('https://rapidcaretranscription.greythr.com/');
+const USERNAME = process.env.USERNAME!;
+const PASSWORD = process.env.PASSWORD!;
 
-  // Wait for redirect to login page
-  await page.waitForURL(/login/);
+test.describe.configure({ retries: 2 });
 
-  // Assert auto logout happened
-  expect(page.url()).toContain('login');
-
-  // Screenshot proof
-  await page.screenshot({ path: 'test-results/auto-signout-proof.png', fullPage: true });
+test('Auto Sign In', async ({ page }) => {
+  await page.goto('https://rapidcaretranscription.greythr.com/uas/portal/auth/login');
+  await page.fill('input[name="username"]', USERNAME);
+  await page.fill('input[name="password"]', PASSWORD);
+  await page.click('button:has-text("Login")');
+  await page.waitForTimeout(5000);
+  await page.screenshot({ path: `signin-proof.png`, fullPage: true });
 });
