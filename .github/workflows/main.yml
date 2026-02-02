@@ -1,4 +1,3 @@
-
 name: GreytHR Automation
 
 on:
@@ -11,6 +10,9 @@ env:
   TZ: Asia/Kolkata
   USERNAME: ${{ secrets.USERNAME }}
   PASSWORD: ${{ secrets.PASSWORD }}
+  EMAIL_USER: ${{ secrets.EMAIL_USER }}
+  EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+  EMAIL_TO: ${{ secrets.EMAIL_TO }}
 
 jobs:
   automation:
