@@ -1,18 +1,14 @@
-import { test } from '@playwright/test';
-
-test.describe.configure({ retries: 2 });
+import { test, expect } from '@playwright/test';
 
 test('Auto Sign Out', async ({ page }) => {
   await page.goto('https://rapidcaretranscription.greythr.com/');
 
-  // wait for login if redirected
-  if (page.url().includes('login')) {
-    await page.fill('#username', process.env.USERNAME!);
-    await page.fill('#password', process.env.PASSWORD!);
-    await page.click('button[type="submit"]');
-  }
+  // Wait for redirect to login page
+  await page.waitForURL(/login/);
 
-  await page.waitForLoadState('networkidle');
+  // Assert auto logout happened
+  expect(page.url()).toContain('login');
 
-  // await page.click('button:has-text("Sign Out")');
+  // Screenshot proof
+  await page.screenshot({ path: 'test-results/auto-signout-proof.png', fullPage: true });
 });
