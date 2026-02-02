@@ -5,14 +5,14 @@ export async function sendEmail() {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: process.env.ALERT_EMAIL,
+      pass: process.env.ALERT_PASS,
     }
   });
 
   await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: process.env.EMAIL_TO,
+    from: process.env.ALERT_EMAIL,
+    to: process.env.ALERT_TO,
     subject: 'Playwright Test Proof',
     text: 'Automation finished. Screenshot attached.',
     attachments: [
