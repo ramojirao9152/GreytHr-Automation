@@ -11,5 +11,5 @@ test('Auto Sign In', async ({ page }) => {
   await page.fill('input[name="password"]', PASSWORD);
   await page.click('button:has-text("Login")');
   await page.waitForTimeout(5000);
-  await page.screenshot({ path: `signin-proof.png`, fullPage: true });
+  await page.screenshot({ path: `signout-proof.png`, fullPage: true });
 });
