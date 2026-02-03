@@ -31,7 +31,7 @@ test('Auto Sign In safely with screenshots', async ({ page }) => {
   await officeBtn.click();
 
   await page.screenshot({ path: 'test-results/03-after-office-selected.png', fullPage: true });
-  // await page.locator('gt-popup-modal').getByRole('button', { name: 'Sign In' }).click();
+  await page.locator('gt-popup-modal').getByRole('button', { name: 'Sign In' }).click();
 
   await page.screenshot({ path: 'test-results/03-after-SignIn-clicked.png', fullPage: true });
   // ⛔ STOP HERE — do NOT confirm attendance
