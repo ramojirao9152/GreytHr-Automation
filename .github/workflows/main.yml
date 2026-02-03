@@ -19,9 +19,9 @@ env:
   TZ: Asia/Kolkata
   USERNAME: ${{ secrets.USERNAME }}
   PASSWORD: ${{ secrets.PASSWORD }}
-  EMAIL_USER: ${{ secrets.ALERT_EMAIL }}
-  EMAIL_PASS: ${{ secrets.ALERT_PASS }}
-  EMAIL_TO: ${{ secrets.ALERT_TO }}
+  ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+  ALERT_PASS: ${{ secrets.ALERT_PASS }}
+  ALERT_TO: ${{ secrets.ALERT_TO }}
 
 jobs:
   signin:
