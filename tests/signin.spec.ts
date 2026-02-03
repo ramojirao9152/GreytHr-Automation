@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-const USERNAME = process.env.GREYTHR_USERNAME!;
-const PASSWORD = process.env.GREYTHR_PASSWORD!;
+const USERNAME = process.env.USERNAME;
+const PASSWORD = process.env.PASSWORD;
 
 test.describe.configure({ retries: 2 });
 
