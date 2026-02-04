@@ -16,21 +16,21 @@ test('Auto Sign In safely with screenshots', async ({ page }) => {
 
   await page.waitForLoadState('networkidle');
 
-  await page.screenshot({ path: 'test-results/01-after-login.png', fullPage: true });
+  // await page.screenshot({ path: 'test-results/01-after-login.png', fullPage: true });
 
   // 2️⃣ Click Sign In (first button)
   const signInBtn = page.getByRole('button', { name: 'Sign In' });
   await signInBtn.waitFor({ state: 'visible' });
   await signInBtn.click();
 
-  await page.screenshot({ path: 'test-results/02-after-signin-click.png', fullPage: true });
+  // await page.screenshot({ path: 'test-results/02-after-signin-click.png', fullPage: true });
 
   // 3️⃣ Select Office
   const officeBtn = page.getByText('Office');
   await officeBtn.waitFor({ state: 'visible' });
   await officeBtn.click();
 
-  await page.screenshot({ path: 'test-results/03-after-office-selected.png', fullPage: true });
+  // await page.screenshot({ path: 'test-results/03-after-office-selected.png', fullPage: true });
   await page.locator('gt-popup-modal').getByRole('button', { name: 'Sign In' }).click();
 
   await page.screenshot({ path: 'test-results/03-after-SignIn-clicked.png', fullPage: true });
