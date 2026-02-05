@@ -27,7 +27,7 @@ test('Auto Sign In safely with screenshots', async ({ page }) => {
 
   // 3️⃣ Select Office
   const officeBtn = page.getByText('Office');
-  await officeBtn.waitFor({ state: 'visible' });
+  await signOut.waitFor({ state: 'visible', timeout: 120000 });
   await officeBtn.click();
 
   // await page.screenshot({ path: 'test-results/03-after-office-selected.png', fullPage: true });
