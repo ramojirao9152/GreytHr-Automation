@@ -26,9 +26,15 @@ test('Auto Sign In safely with screenshots', async ({ page }) => {
   // await page.screenshot({ path: 'test-results/02-after-signin-click.png', fullPage: true });
 
   // 3️⃣ Select Office
-  const officeBtn = page.getByText('Office');
-  await signOut.waitFor({ state: 'visible', timeout: 120000 });
-  await officeBtn.click();
+  // Open dropdown
+  await page.locator('button.dropdown-button').waitFor({ state: 'visible' });
+  await page.locator('button.dropdown-button').click();
+
+  // Select option
+  await page.locator('li:has-text("Office"), div:has-text("Office")')
+          .first()
+          .click();
+
 
   // await page.screenshot({ path: 'test-results/03-after-office-selected.png', fullPage: true });
   await page.locator('gt-popup-modal').getByRole('button', { name: 'Sign In' }).click();
