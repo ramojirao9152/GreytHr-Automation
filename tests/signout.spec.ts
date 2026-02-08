@@ -1,121 +1,42 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
-const LOGIN_URL =
-  'https://rapidcaretranscription.greythr.com/uas/portal/auth/login';
+const USERNAME = process.env.USERNAME;
+const PASSWORD = process.env.PASSWORD;
 
-test('Attendance Sign Out with popup retry', async ({ page }) => {
-  // 1️⃣ Login
-  await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded' });
+test.describe.configure({ retries: 2 });
 
-  await page.getByRole('textbox', { name: 'Login ID' }).fill(
-    process.env.USERNAME!
-  );
-  await page.getByRole('textbox', { name: 'Password' }).fill(
-    process.env.PASSWORD!
-  );
-  await page.getByRole('button', { name: 'Login' }).click();
+test('Auto Sign In safely with screenshots', async ({ page }) => {
 
-  // 2️⃣ Wait for dashboard Sign Out
-  const dashboardSignOutBtn = page
-    .locator('gt-attendance-info')
-    .getByRole('button', { name: 'Sign Out' });
+  // 1️⃣ Login page
+  await page.goto('https://rapidcaretranscription.greythr.com/uas/portal/auth/login');
 
-  await dashboardSignOutBtn.waitFor({ state: 'visible', timeout: 20000 });
+  await page.fill('input[name="username"]', USERNAME);
+  await page.fill('input[name="password"]', PASSWORD);
+  await page.click('button:has-text("Login")');
 
-  // 🔁 Popup retry loop
-  const MAX_POPUP_RETRIES = 3;
-  let popupReady = false;
+  await page.waitForLoadState('networkidle');
 
-  for (let attempt = 1; attempt <= MAX_POPUP_RETRIES; attempt++) {
-    console.log(`Popup attempt ${attempt}`);
+  // await page.screenshot({ path: 'test-results/01-after-login.png', fullPage: true });
 
-    await dashboardSignOutBtn.click();
+  // 2️⃣ Click Sign In (first button)
+  const signInBtn = page.getByRole('button', { name: 'Sign Out' });
+  await signInBtn.waitFor({ state: 'visible' });
+  await signInBtn.click();
 
-    const popup = page
-      .locator('gt-popup-modal[open]')
-      .filter({ hasText: 'You are not signed in yet' });
+  // await page.screenshot({ path: 'test-results/02-after-signin-click.png', fullPage: true });
 
-    await popup.waitFor({ state: 'attached', timeout: 10000 });
+  // 3️⃣ Select Office
+  // const officeBtn = page.getByText('Office');
+  // await officeBtn.waitFor({ state: 'visible' });
+  // await officeBtn.click();
 
-    const locationDropdown = popup
-      .getByRole('button')
-      .filter({ hasText: /^Select$/ });
+  // await page.screenshot({ path: 'test-results/03-after-office-selected.png', fullPage: true });
+  await page.locator('gt-popup-modal').getByRole('button', { name: 'Sign Out' }).click();
 
-    const dropdownVisible = await locationDropdown
-      .waitFor({ state: 'visible', timeout: 8000 })
-      .then(() => true)
-      .catch(() => false);
 
-    if (dropdownVisible) {
-      console.log('Dropdown loaded successfully');
+  await page.screenshot({ path: 'test-results/03-after-SignOut-clicked.png', fullPage: true });
+  // ⛔ STOP HERE — do NOT confirm attendance
+  console.log('Stopped before final Sign In confirmation to avoid attendance issue');
 
-      await page.screenshot({
-        path: `test-results/attempt-${attempt}-popup-ready.png`,
-        fullPage: true,
-      });
-
-      // Select Office
-      // await locationDropdown.click();
-      // await popup.getByText('Office', { exact: true }).click();
-
-      await page.screenshot({
-        path: `test-results/attempt-${attempt}-office-selected.png`,
-        fullPage: true,
-      });
-
-      // 🔽 NEW PART: Click popup Sign Out safely
-      const popupSignOutBtn = popup.getByRole('button', {
-        name: 'Sign Out',
-      });
-
-      // Wait until enabled
-      await popupSignOutBtn.waitFor({
-        state: 'visible',
-        timeout: 5000,
-      });
-
-      await popupSignOutBtn.waitFor({
-        state: 'attached',
-      });
-
-      // Extra guard: wait until not disabled
-      await page.waitForFunction(
-        (btn) => !btn.hasAttribute('disabled'),
-        await popupSignOutBtn.elementHandle()
-      );
-
-      await popupSignOutBtn.click();
-
-      await page.screenshot({
-        path: `test-results/attempt-${attempt}-final-signin-clicked.png`,
-        fullPage: true,
-      });
-
-      popupReady = true;
-      break;
-    }
-
-    // ❌ Dropdown not visible → close popup safely
-    console.warn('Dropdown not loaded, closing popup');
-
-    await page.screenshot({
-      path: `test-results/attempt-${attempt}-dropdown-missing.png`,
-      fullPage: true,
-    });
-
-    const closeBtn = popup.locator('button:has(i), i').first();
-    if (await closeBtn.isVisible()) {
-      await closeBtn.click();
-    }
-
-    await page.waitForTimeout(1000);
-  }
-
-  if (!popupReady) {
-    throw new Error(
-      'Work location dropdown did not load after multiple popup retries'
-    );
-  }
-
-  console.log('Attendance popup handled successfully');
 });
+ 
