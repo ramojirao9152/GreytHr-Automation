@@ -29,10 +29,12 @@ test('Auto Sign In safely with screenshots', async ({ page }) => {
   // Open dropdown
 // Select Office
 // Scope to popup
-const popup = page.locator('gt-popup-modal');
+// 1️⃣ Target ONLY the attendance popup
+const popup = page.locator('gt-popup-modal').filter({ hasText: 'You are not signed in yet' });
+
 await expect(popup).toBeVisible();
 
-// 🔹 Find dropdown ONLY when it shows "Select"
+// 2️⃣ Find dropdown when it shows "Select"
 const locationDropdown = popup
   .getByRole('button')
   .filter({ hasText: /^Select$/ });
@@ -40,7 +42,7 @@ const locationDropdown = popup
 await expect(locationDropdown).toBeVisible();
 await locationDropdown.click();
 
-// 🔹 Select Office from custom dropdown list
+// 3️⃣ Select "Office" (custom dropdown)
 const officeOption = popup
   .locator('li, div')
   .filter({ hasText: /^Office$/ })
@@ -49,26 +51,25 @@ const officeOption = popup
 await expect(officeOption).toBeVisible();
 await officeOption.click();
 
-// 🔹 Confirm dropdown value changed
+// 4️⃣ Verify dropdown value changed
 await expect(locationDropdown).not.toHaveText(/^Select$/);
 await expect(locationDropdown).toHaveText(/Office/i);
 
-// 📸 Screenshot proof
+// 5️⃣ Screenshot proof
 await popup.screenshot({
   path: 'test-results/popup-office-selected.png',
 });
 
 
+
 // Get the Sign In button inside popup
-const popupSignInBtn = page
-  .locator('gt-popup-modal')
-  .getByRole('button', { name: 'Sign In' });
+// const popupSignInBtn = page.locator('gt-popup-modal').getByRole('button', { name: 'Sign In' });
 
 // ✅ Wait until it becomes enabled
-await expect(popupSignInBtn).toBeEnabled();
+// await expect(popupSignInBtn).toBeEnabled();
 
 // Now click safely
-await popupSignInBtn.click();
+// await popupSignInBtn.click();
 
   await page.screenshot({ path: 'test-results/03-after-SignIn-clicked.png', fullPage: true });
   // ⛔ STOP HERE — do NOT confirm attendance
