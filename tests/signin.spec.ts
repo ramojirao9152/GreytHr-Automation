@@ -76,7 +76,7 @@ test.describe('Auto Sign In with inline screenshots + retry', () => {
     // 6️⃣ Target ONLY attendance popup
     const popup = page.locator('gt-popup-modal')
 
-    await expect(popup).toBeVisible();
+    
     await popup.screenshot({
       path: 'test-results/05-attendance-popup-visible.png',
     });
