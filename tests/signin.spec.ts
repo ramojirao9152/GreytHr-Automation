@@ -1,78 +1,96 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
-const USERNAME = process.env.USERNAME;
-const PASSWORD = process.env.PASSWORD;
+const LOGIN_URL =
+  'https://rapidcaretranscription.greythr.com/uas/portal/auth/login';
 
-test.describe.configure({ retries: 2 });
+// 🔁 Login with retry if dashboard loads slowly
+async function loginWithRetry(page: Page, maxRetries = 2) {
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    console.log(`Login attempt ${attempt}`);
 
-test('Auto Sign In safely with screenshots', async ({ page }) => {
+    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded' });
 
-  // 1️⃣ Login page
-  await page.goto('https://rapidcaretranscription.greythr.com/uas/portal/auth/login');
+    await page.getByRole('textbox', { name: 'Login ID' }).fill(
+      process.env.USERNAME!
+    );
+    await page.getByRole('textbox', { name: 'Password' }).fill(
+      process.env.PASSWORD!
+    );
+    await page.getByRole('button', { name: 'Login' }).click();
 
-  await page.fill('input[name="username"]', USERNAME);
-  await page.fill('input[name="password"]', PASSWORD);
-  await page.click('button:has-text("Login")');
+    try {
+      // ✅ Business signal: dashboard attendance Sign In button
+      const dashboardSignInBtn = page
+        .locator('gt-attendance-info')
+        .getByRole('button', { name: 'Sign In' });
 
-  await page.waitForLoadState('networkidle');
+      await dashboardSignInBtn.waitFor({
+        state: 'visible',
+        timeout: 15000, // ⏳ max wait after login
+      });
 
-  // await page.screenshot({ path: 'test-results/01-after-login.png', fullPage: true });
+      console.log('Dashboard loaded successfully');
+      return; // ✅ success
+    } catch (error) {
+      console.warn('Dashboard load timeout');
 
-  // 2️⃣ Click Sign In (first button)
-  const signInBtn = page.getByRole('button', { name: 'Sign In' });
-  await signInBtn.waitFor({ state: 'visible' });
-  await signInBtn.click();
+      await page.screenshot({
+        path: `test-results/login-timeout-attempt-${attempt}.png`,
+        fullPage: true,
+      });
 
-  // await page.screenshot({ path: 'test-results/02-after-signin-click.png', fullPage: true });
+      if (attempt > maxRetries) {
+        throw new Error('Login failed after multiple retries');
+      }
 
-  // 3️⃣ Select Office
-  // Open dropdown
-// Select Office
-// Scope to popup
-// 1️⃣ Target ONLY the attendance popup
-const popup = page.locator('gt-popup-modal').filter({ hasText: 'You are not signed in yet' });
+      // 🔁 Reset session and retry
+      await page.context().clearCookies();
+      await page.reload();
+    }
+  }
+}
 
-await expect(popup).toBeVisible();
+test.describe('Auto Sign In safely with retry + screenshot', () => {
+  test('Select Office in attendance popup', async ({ page }) => {
+    // 1️⃣ Login (with retry if dashboard is slow)
+    await loginWithRetry(page);
 
-// 2️⃣ Find dropdown when it shows "Select"
-const locationDropdown = popup
-  .getByRole('button')
-  .filter({ hasText: /^Select$/ });
+    // 2️⃣ Click dashboard Sign In (NOT popup one)
+    const dashboardSignInBtn = page
+      .locator('gt-attendance-info')
+      .getByRole('button', { name: 'Sign In' });
 
-await expect(locationDropdown).toBeVisible();
-await locationDropdown.click();
+    await expect(dashboardSignInBtn).toBeVisible();
+    await dashboardSignInBtn.click();
 
-// 3️⃣ Select "Office" (custom dropdown)
-const officeOption = popup
-  .locator('li, div')
-  .filter({ hasText: /^Office$/ })
-  .first();
+    // 3️⃣ Target ONLY the attendance popup
+    const popup = page
+      .locator('gt-popup-modal')
+      .filter({ hasText: 'You are not signed in yet' });
 
-await expect(officeOption).toBeVisible();
-await officeOption.click();
+    await expect(popup).toBeVisible();
 
-// 4️⃣ Verify dropdown value changed
-await expect(locationDropdown).not.toHaveText(/^Select$/);
-await expect(locationDropdown).toHaveText(/Office/i);
+    // 4️⃣ Find dropdown when it shows "Select"
+    const locationDropdown = popup
+      .getByRole('button')
+      .filter({ hasText: /^Select$/ });
 
-// 5️⃣ Screenshot proof
-await popup.screenshot({
-  path: 'test-results/popup-office-selected.png',
-});
+    await expect(locationDropdown).toBeVisible();
+    await locationDropdown.click();
 
+    // 5️⃣ Select "Office"
+    const officeOption = popup.getByText('Office', { exact: true });
+    await expect(officeOption).toBeVisible();
+    await officeOption.click();
 
+    // 6️⃣ Verify dropdown value changed
+    await expect(locationDropdown).toHaveText(/Office/i);
 
-// Get the Sign In button inside popup
-// const popupSignInBtn = page.locator('gt-popup-modal').getByRole('button', { name: 'Sign In' });
+    // 📸 Screenshot after Office selection
+    await popup.screenshot({
+      path: 'test-results/popup-office-selected.png',
+    });
 
-// ✅ Wait until it becomes enabled
-// await expect(popupSignInBtn).toBeEnabled();
-
-// Now click safely
-// await popupSignInBtn.click();
-
-  await page.screenshot({ path: 'test-results/03-after-SignIn-clicked.png', fullPage: true });
-  // ⛔ STOP HERE — do NOT confirm attendance
-  console.log('Stopped before final Sign In confirmation to avoid attendance issue');
-
+    console.log('Office selected successfully — stopping before final Sign In');
+  });
 });
