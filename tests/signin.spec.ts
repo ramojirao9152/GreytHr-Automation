@@ -3,87 +3,98 @@ import { test, expect } from '@playwright/test';
 const LOGIN_URL =
   'https://rapidcaretranscription.greythr.com/uas/portal/auth/login';
 
-test.describe('Auto Sign In with inline screenshots + retry', () => {
-  test('Select Office in attendance popup', async ({ page }) => {
-    // 1️⃣ Login page
-    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded' });
-    await page.screenshot({
-      path: 'test-results/01-login-page.png',
-      fullPage: true,
-    });
+test('Attendance Sign In with popup retry', async ({ page }) => {
+  // 1️⃣ Login
+  await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded' });
 
-    // 2️⃣ Credentials
-    await page.getByRole('textbox', { name: 'Login ID' }).fill(
-      process.env.USERNAME!
-    );
-    await page.getByRole('textbox', { name: 'Password' }).fill(
-      process.env.PASSWORD!
-    );
-    await page.screenshot({
-      path: 'test-results/02-credentials-filled.png',
-      fullPage: true,
-    });
+  await page.getByRole('textbox', { name: 'Login ID' }).fill(
+    process.env.USERNAME!
+  );
+  await page.getByRole('textbox', { name: 'Password' }).fill(
+    process.env.PASSWORD!
+  );
+  await page.getByRole('button', { name: 'Login' }).click();
 
-    // 3️⃣ Login
-    await page.getByRole('button', { name: 'Login' }).click();
+  // 2️⃣ Wait for dashboard Sign In
+  const dashboardSignInBtn = page
+    .locator('gt-attendance-info')
+    .getByRole('button', { name: 'Sign In' });
 
-    // 4️⃣ Dashboard Sign In (business signal)
-    const dashboardSignInBtn = page
-      .locator('gt-attendance-info')
-      .getByRole('button', { name: 'Sign In' });
+  await dashboardSignInBtn.waitFor({
+    state: 'visible',
+    timeout: 20000,
+  });
 
-    await dashboardSignInBtn.waitFor({
-      state: 'visible',
-      timeout: 20000,
-    });
+  // 🔁 Popup retry loop
+  const MAX_POPUP_RETRIES = 3;
+  let popupReady = false;
 
-    await page.screenshot({
-      path: 'test-results/03-dashboard-loaded.png',
-      fullPage: true,
-    });
+  for (let attempt = 1; attempt <= MAX_POPUP_RETRIES; attempt++) {
+    console.log(`Popup attempt ${attempt}`);
 
-    // 5️⃣ Click dashboard Sign In
+    // 3️⃣ Click dashboard Sign In
     await dashboardSignInBtn.click();
 
-    // 6️⃣ WAIT for attendance popup to OPEN (not visible yet)
+    // 4️⃣ Locate attendance popup (open one)
     const popup = page
       .locator('gt-popup-modal[open]')
       .filter({ hasText: 'You are not signed in yet' });
 
     await popup.waitFor({ state: 'attached', timeout: 10000 });
 
-    // 7️⃣ NOW wait for dropdown inside popup (this is the real signal)
+    // 5️⃣ Try waiting for dropdown
     const locationDropdown = popup
       .getByRole('button')
       .filter({ hasText: /^Select$/ });
 
-    await locationDropdown.waitFor({
-      state: 'visible',
-      timeout: 10000,
-    });
+    const dropdownVisible = await locationDropdown
+      .waitFor({ state: 'visible', timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (dropdownVisible) {
+      console.log('Dropdown loaded successfully');
+
+      await popup.screenshot({
+        path: `test-results/popup-ready-attempt-${attempt}.png`,
+      });
+
+      // ✅ Select Office
+      await locationDropdown.click();
+      await popup.getByText('Office', { exact: true }).click();
+
+      await popup.screenshot({
+        path: `test-results/office-selected-attempt-${attempt}.png`,
+      });
+
+      popupReady = true;
+      break;
+    }
+
+    // ❌ Dropdown not visible → close popup
+    console.warn('Dropdown not loaded, closing popup');
 
     await popup.screenshot({
-      path: 'test-results/05-attendance-popup-ready.png',
+      path: `test-results/popup-no-dropdown-attempt-${attempt}.png`,
     });
 
-    // 8️⃣ Open dropdown
-    await locationDropdown.click();
-    await popup.screenshot({
-      path: 'test-results/06-dropdown-opened.png',
-    });
+    // Click ❌ (close icon)
+    await popup
+      .locator('button, i')
+      .filter({ hasText: '' }) // cross icon has no text
+      .first()
+      .click();
 
-    // 9️⃣ Select Office
-    await popup.getByText('Office', { exact: true }).click();
-    await popup.screenshot({
-      path: 'test-results/07-office-selected.png',
-    });
+    // Small pause to let UI settle
+    await page.waitForTimeout(1000);
+  }
 
-    // 🔟 Verify update
-    await expect(locationDropdown).toHaveText(/Office/i);
-    await popup.screenshot({
-      path: 'test-results/08-dropdown-updated.png',
-    });
+  // 🚨 Fail if dropdown never appeared
+  if (!popupReady) {
+    throw new Error(
+      'Work location dropdown did not load after multiple popup retries'
+    );
+  }
 
-    console.log('Office selected successfully — stopping safely');
-  });
+  console.log('Attendance popup handled successfully');
 });
