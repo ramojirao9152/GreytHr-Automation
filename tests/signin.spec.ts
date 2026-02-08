@@ -28,9 +28,36 @@ test('Auto Sign In safely with screenshots', async ({ page }) => {
   // 3️⃣ Select Office
   // Open dropdown
 // Select Office
-await page.locator('button.dropdown-button').click();
+// Scope to popup
+const popup = page.locator('gt-popup-modal');
+await expect(popup).toBeVisible();
 
-await page.getByRole('option', { name: 'Office' }).click();
+// 🔹 Find dropdown ONLY when it shows "Select"
+const locationDropdown = popup
+  .getByRole('button')
+  .filter({ hasText: /^Select$/ });
+
+await expect(locationDropdown).toBeVisible();
+await locationDropdown.click();
+
+// 🔹 Select Office from custom dropdown list
+const officeOption = popup
+  .locator('li, div')
+  .filter({ hasText: /^Office$/ })
+  .first();
+
+await expect(officeOption).toBeVisible();
+await officeOption.click();
+
+// 🔹 Confirm dropdown value changed
+await expect(locationDropdown).not.toHaveText(/^Select$/);
+await expect(locationDropdown).toHaveText(/Office/i);
+
+// 📸 Screenshot proof
+await popup.screenshot({
+  path: 'test-results/popup-office-selected.png',
+});
+
 
 // Get the Sign In button inside popup
 const popupSignInBtn = page
