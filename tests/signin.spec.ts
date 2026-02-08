@@ -54,11 +54,40 @@ test('Attendance Sign In with popup retry', async ({ page }) => {
         fullPage: true,
       });
 
+      // Select Office
       await locationDropdown.click();
       await popup.getByText('Office', { exact: true }).click();
 
       await page.screenshot({
         path: `test-results/attempt-${attempt}-office-selected.png`,
+        fullPage: true,
+      });
+
+      // 🔽 NEW PART: Click popup Sign In safely
+      const popupSignInBtn = popup.getByRole('button', {
+        name: 'Sign In',
+      });
+
+      // Wait until enabled
+      await popupSignInBtn.waitFor({
+        state: 'visible',
+        timeout: 5000,
+      });
+
+      await popupSignInBtn.waitFor({
+        state: 'attached',
+      });
+
+      // Extra guard: wait until not disabled
+      await page.waitForFunction(
+        (btn) => !btn.hasAttribute('disabled'),
+        await popupSignInBtn.elementHandle()
+      );
+
+      await popupSignInBtn.click();
+
+      await page.screenshot({
+        path: `test-results/attempt-${attempt}-final-signin-clicked.png`,
         fullPage: true,
       });
 
@@ -74,7 +103,6 @@ test('Attendance Sign In with popup retry', async ({ page }) => {
       fullPage: true,
     });
 
-    // Safe close: try header close icon
     const closeBtn = popup.locator('button:has(i), i').first();
     if (await closeBtn.isVisible()) {
       await closeBtn.click();
