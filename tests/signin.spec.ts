@@ -27,17 +27,21 @@ test('Auto Sign In safely with screenshots', async ({ page }) => {
 
   // 3️⃣ Select Office
   // Open dropdown
-  await page.locator('button.dropdown-button').waitFor({ state: 'visible' });
-  await page.locator('button.dropdown-button').click();
+// Select Office
+await page.locator('button.dropdown-button').click();
 
-  // Select option
-  await page.locator('li:has-text("Office"), div:has-text("Office")')
-          .first()
-          .click();
+await page.getByRole('option', { name: 'Office' }).click();
 
+// Get the Sign In button inside popup
+const popupSignInBtn = page
+  .locator('gt-popup-modal')
+  .getByRole('button', { name: 'Sign In' });
 
-  // await page.screenshot({ path: 'test-results/03-after-office-selected.png', fullPage: true });
-  await page.locator('gt-popup-modal').getByRole('button', { name: 'Sign In' }).click();
+// ✅ Wait until it becomes enabled
+await expect(popupSignInBtn).toBeEnabled();
+
+// Now click safely
+await popupSignInBtn.click();
 
   await page.screenshot({ path: 'test-results/03-after-SignIn-clicked.png', fullPage: true });
   // ⛔ STOP HERE — do NOT confirm attendance
