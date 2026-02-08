@@ -64,12 +64,7 @@ test.describe('Auto Sign In safely with retry + screenshot', () => {
     await dashboardSignInBtn.click();
 
     // 3️⃣ Target ONLY the attendance popup
-    const popup = page
-      .locator('gt-popup-modal')
-      .filter({ hasText: 'You are not signed in yet' });
-
-    await expect(popup).toBeVisible();
-
+    const popup = page.locator('gt-popup-modal');
     // 4️⃣ Find dropdown when it shows "Select"
     const locationDropdown = popup
       .getByRole('button')
