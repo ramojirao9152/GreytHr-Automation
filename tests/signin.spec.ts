@@ -63,9 +63,11 @@ test('Attendance Sign In with popup retry', async ({ page }) => {
       await locationDropdown.click();
       await popup.getByText('Office', { exact: true }).click();
 
-      await popup.screenshot({
-        path: `test-results/office-selected-attempt-${attempt}.png`,
-      });
+      await page.screenshot({
+  path: `test-results/popup-ready-attempt-${attempt}.png`,
+  fullPage: true,
+});
+
 
       popupReady = true;
       break;
