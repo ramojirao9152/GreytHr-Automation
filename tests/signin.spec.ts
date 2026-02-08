@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 const LOGIN_URL =
   'https://rapidcaretranscription.greythr.com/uas/portal/auth/login';
@@ -20,10 +20,7 @@ test('Attendance Sign In with popup retry', async ({ page }) => {
     .locator('gt-attendance-info')
     .getByRole('button', { name: 'Sign In' });
 
-  await dashboardSignInBtn.waitFor({
-    state: 'visible',
-    timeout: 20000,
-  });
+  await dashboardSignInBtn.waitFor({ state: 'visible', timeout: 20000 });
 
   // 🔁 Popup retry loop
   const MAX_POPUP_RETRIES = 3;
@@ -32,17 +29,14 @@ test('Attendance Sign In with popup retry', async ({ page }) => {
   for (let attempt = 1; attempt <= MAX_POPUP_RETRIES; attempt++) {
     console.log(`Popup attempt ${attempt}`);
 
-    // 3️⃣ Click dashboard Sign In
     await dashboardSignInBtn.click();
 
-    // 4️⃣ Locate attendance popup (open one)
     const popup = page
       .locator('gt-popup-modal[open]')
       .filter({ hasText: 'You are not signed in yet' });
 
     await popup.waitFor({ state: 'attached', timeout: 10000 });
 
-    // 5️⃣ Try waiting for dropdown
     const locationDropdown = popup
       .getByRole('button')
       .filter({ hasText: /^Select$/ });
@@ -55,43 +49,40 @@ test('Attendance Sign In with popup retry', async ({ page }) => {
     if (dropdownVisible) {
       console.log('Dropdown loaded successfully');
 
-      await popup.screenshot({
-        path: `test-results/popup-ready-attempt-${attempt}.png`,
+      await page.screenshot({
+        path: `test-results/attempt-${attempt}-popup-ready.png`,
+        fullPage: true,
       });
 
-      // ✅ Select Office
       await locationDropdown.click();
       await popup.getByText('Office', { exact: true }).click();
 
       await page.screenshot({
-  path: `test-results/popup-ready-attempt-${attempt}.png`,
-  fullPage: true,
-});
-
+        path: `test-results/attempt-${attempt}-office-selected.png`,
+        fullPage: true,
+      });
 
       popupReady = true;
       break;
     }
 
-    // ❌ Dropdown not visible → close popup
+    // ❌ Dropdown not visible → close popup safely
     console.warn('Dropdown not loaded, closing popup');
 
-    await popup.screenshot({
-      path: `test-results/popup-no-dropdown-attempt-${attempt}.png`,
+    await page.screenshot({
+      path: `test-results/attempt-${attempt}-dropdown-missing.png`,
+      fullPage: true,
     });
 
-    // Click ❌ (close icon)
-    await popup
-      .locator('button, i')
-      .filter({ hasText: '' }) // cross icon has no text
-      .first()
-      .click();
+    // Safe close: try header close icon
+    const closeBtn = popup.locator('button:has(i), i').first();
+    if (await closeBtn.isVisible()) {
+      await closeBtn.click();
+    }
 
-    // Small pause to let UI settle
     await page.waitForTimeout(1000);
   }
 
-  // 🚨 Fail if dropdown never appeared
   if (!popupReady) {
     throw new Error(
       'Work location dropdown did not load after multiple popup retries'
