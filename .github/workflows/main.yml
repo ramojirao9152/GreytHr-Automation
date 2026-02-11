@@ -12,8 +12,9 @@ on:
           - signout
 
   schedule:
-    - cron: "30 02 * * *"   # 8:00 AM IST
+    - cron: "30 1 * * *"   # 8:00 AM IST
     - cron: "30 14 * * *"  # 8:00 PM IST
+
 
 env:
   TZ: Asia/Kolkata
@@ -24,63 +25,80 @@ env:
   ALERT_TO: ${{ secrets.ALERT_TO }}
 
 jobs:
+
   signin:
     runs-on: ubuntu-latest
     environment: test
-    if: github.event.schedule == '30 2 * * *' || github.event.inputs.action == 'signin'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'signin')
 
     steps:
+      - name: Check IST time window for Signin
+        id: check_time
+        run: |
+          HOUR=$(TZ=Asia/Kolkata date +%H)
+          echo "Current IST hour: $HOUR"
+
+          if [ "$HOUR" -ge 7 ] && [ "$HOUR" -lt 11 ]; then
+            echo "RUN_SIGNIN=true" >> $GITHUB_ENV
+          else
+            echo "RUN_SIGNIN=false" >> $GITHUB_ENV
+          fi
+
       - uses: actions/checkout@v3
+        if: env.RUN_SIGNIN == 'true'
 
       - uses: actions/setup-node@v4
+        if: env.RUN_SIGNIN == 'true'
         with:
           node-version: 18
 
       - name: Install dependencies
+        if: env.RUN_SIGNIN == 'true'
         run: npm install
 
       - name: Install Playwright
+        if: env.RUN_SIGNIN == 'true'
         run: npx playwright install --with-deps
 
-      # ✅ Safe env debug
-      - name: Verify secrets
-        run: |
-          echo "USERNAME set: ${{ secrets.USERNAME != '' }}"
-          echo "PASSWORD set: ${{ secrets.PASSWORD != '' }}"
-          echo "EMAIL_USER set: ${{ secrets.ALERT_EMAIL != '' }}"
-          echo "EMAIL_PASS set: ${{ secrets.ALERT_PASS != '' }}"
-          echo "EMAIL_TO set: ${{ secrets.ALERT_TO != '' }}"
-
       - name: Run Sign In test
-        run: npx playwright test tests/signin.spec.ts --project=chromium 
+        if: env.RUN_SIGNIN == 'true'
+        run: npx playwright test tests/signin.spec.ts --project=chromium
 
 
   signout:
     runs-on: ubuntu-latest
     environment: test
-    if: github.event.schedule == '30 14 * * *' || github.event.inputs.action == 'signout'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'signout')
 
     steps:
+      - name: Check IST time window for Signout
+        id: check_time
+        run: |
+          HOUR=$(TZ=Asia/Kolkata date +%H)
+          echo "Current IST hour: $HOUR"
+
+          if [ "$HOUR" -ge 20 ] && [ "$HOUR" -lt 24 ]; then
+            echo "RUN_SIGNOUT=true" >> $GITHUB_ENV
+          else
+            echo "RUN_SIGNOUT=false" >> $GITHUB_ENV
+          fi
+
       - uses: actions/checkout@v3
+        if: env.RUN_SIGNOUT == 'true'
 
       - uses: actions/setup-node@v4
+        if: env.RUN_SIGNOUT == 'true'
         with:
           node-version: 18
 
       - name: Install dependencies
+        if: env.RUN_SIGNOUT == 'true'
         run: npm install
 
       - name: Install Playwright
+        if: env.RUN_SIGNOUT == 'true'
         run: npx playwright install --with-deps
 
-      # ✅ Safe env debug
-      - name: Verify secrets
-        run: |
-          echo "USERNAME set: ${{ secrets.USERNAME != '' }}"
-          echo "PASSWORD set: ${{ secrets.PASSWORD != '' }}"
-          echo "EMAIL_USER set: ${{ secrets.ALERT_EMAIL != '' }}"
-          echo "EMAIL_PASS set: ${{ secrets.ALERT_PASS != '' }}"
-          echo "EMAIL_TO set: ${{ secrets.ALERT_TO != '' }}"
-
       - name: Run Sign Out test
+        if: env.RUN_SIGNOUT == 'true'
         run: npx playwright test tests/signout.spec.ts --project=chromium
