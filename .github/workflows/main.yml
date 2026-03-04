@@ -37,7 +37,7 @@ jobs:
           HOUR=$(TZ=Asia/Kolkata date +%H)
           echo "Current IST hour: $HOUR"
 
-          if [ "$HOUR" -ge 7 ] && [ "$HOUR" -lt 24 ]; then
+          if [ "$HOUR" -ge 7 ] && [ "$HOUR" -lt 11 ]; then
             echo "RUN_SIGNIN=true" >> $GITHUB_ENV
           else
             echo "RUN_SIGNIN=false" >> $GITHUB_ENV
@@ -84,7 +84,7 @@ jobs:
           HOUR=$(TZ=Asia/Kolkata date +%H)
           echo "Current IST hour: $HOUR"
 
-          if [ "$HOUR" -ge 19 ] && [ "$HOUR" -lt 20 ]; then
+          if [ "$HOUR" -ge 20 ] && [ "$HOUR" -lt 24 ]; then
             echo "RUN_SIGNOUT=true" >> $GITHUB_ENV
           else
             echo "RUN_SIGNOUT=false" >> $GITHUB_ENV
