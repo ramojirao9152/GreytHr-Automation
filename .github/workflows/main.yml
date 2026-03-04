@@ -65,11 +65,11 @@ jobs:
 
       - name: Send Success Email
         if: ${{ success() && env.RUN_SIGNIN == 'true' }}
-        run: npx ts-node notifyEmail.ts success
+        run: npx ts-node --transpile-only notifyEmail.ts success
 
       - name: Send Failure Email
         if: ${{ failure() && env.RUN_SIGNIN == 'true' }}
-        run: npx ts-node notifyEmail.ts failure
+        run: npx ts-node --transpile-only notifyEmail.ts failure
 
 
   signout:
@@ -112,8 +112,8 @@ jobs:
 
       - name: Send Success Email
         if: ${{ success() && env.RUN_SIGNOUT == 'true' }}
-        run: npx ts-node notifyEmail.ts success
+        run: npx ts-node --transpile-only notifyEmail.ts success
 
       - name: Send Failure Email
         if: ${{ failure() && env.RUN_SIGNOUT == 'true' }}
-        run: npx ts-node notifyEmail.ts failure
+        run: npx ts-node --transpile-only notifyEmail.ts failure
