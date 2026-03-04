@@ -1,6 +1,6 @@
-import nodemailer from 'nodemailer';
-import fs from 'fs';
-import path from 'path';
+const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
 
 const status = process.argv[2] || 'unknown';
 
